@@ -10,7 +10,7 @@ The goal is to create an application for various document-related tasks, with a 
 ## Features
 
 - A Beautiful And Highly Functional PDF and csv Viewer
-- 🔄Streaming API Responses in Real-Time
+- Streaming API Responses in Real-Time
 - Authentication Using Kinde
 - Clean UI Using 'shadcn-ui'
 - Optimistic UI Updates for a Great UX
@@ -45,8 +45,10 @@ The goal is to create an application for various document-related tasks, with a 
 7. Zod: For TypeScript-first schema validation.
 8. Various Utility and Styling Libraries: Such as clsx, date-fns, react-hook-form, simplebar-react, etc.
 
-[installations and configurations](docs/installations.md)
-[Challendes and improvements](docs/architecture.md)
+[installations and configurations](docs/installations.md).
+
+
+[Challendes and improvements](docs/architecture.md).
 
 
 ## License
