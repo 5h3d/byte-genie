@@ -16,7 +16,7 @@ Before you begin, ensure you have the following tools installed on your local ma
 To get started with the project, first clone the repository to your local machine:
 
 ```sh
-git clone https://github.com/5h3d/gudog-task.git
+git clone https://github.com/5h3d/byte-genie.git
 ```
 
 #### Install Dependencies
