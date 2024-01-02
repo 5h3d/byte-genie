@@ -148,41 +148,78 @@ export const appRouter = router({
       return file;
     }),
 
-  // New Procedure: Summarize Text
   summarizeText: privateProcedure
     .input(
       z.object({
         fileId: z.string(),
-        textToSummarize: z.string(),
+        url: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const { fileId, textToSummarize } = input;
+      const { fileId, url } = input;
       const userId = ctx.userId;
+      const MAX_LENGTH = 1000; // Set your maximum length here
 
-      // Fetch the summary from the Python backend
-      const response = await fetch(process.env.PYTHON_BACKEND_URL!, {
+      // Fetch the summary task ID from the Python backend
+      const startResponse = await fetch("http://127.0.0.1:8000/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: textToSummarize }),
+        body: JSON.stringify({ url: url }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch summary from backend");
+      if (!startResponse.ok) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to start summary processing.",
+        });
       }
 
-      const { summary } = await response.json();
+      const { task_id } = await startResponse.json();
 
-      // Save the summary to the database
-      const newSummary = await db.summary.create({
-        data: {
-          text: summary, 
-          fileId,
-          userId,
-        },
-      });
+      // Poll the status endpoint until the summary is complete
+      let summary = null;
+      while (!summary) {
+        const statusResponse = await fetch(
+          `http://127.0.0.1:8000/status/${task_id}`
+        );
+        if (!statusResponse.ok) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to check summary status.",
+          });
+        }
 
-      return newSummary;
+        const statusData = await statusResponse.json();
+        if (statusData.status.startsWith("Completed")) {
+          summary = statusData.status.replace("Completed: ", "");
+        } else if (statusData.status.startsWith("Failed")) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Summary processing failed.",
+          });
+        }
+
+        // Wait for a short period before polling again
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+
+      // Check if the summary is within the permissible length
+      if (summary.length <= MAX_LENGTH) {
+        // Save the summary to the database
+        const newSummary = await db.summary.create({
+          data: {
+            text: summary,
+            fileId,
+            userId,
+          },
+        });
+
+        return newSummary;
+      } else {
+        console.log("summary", summary);
+        // Summary is too long to save in the database, just return it
+        return { summary: summary, fileId, userId, isTooLong: true };
+      }
     }),
 
   // New Procedure: Get Summaries
