@@ -1,33 +1,63 @@
-
+"use client";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Button } from "./ui/button";
 import { File, Ghost, Loader2, Trash } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
+import { useToast } from "./ui/use-toast";
+import { trpc } from "@/app/_trpc/client";
+import { useState } from "react";
 
-interface File {
-  id: string;
-  name: string;
-  createdAt: string;
-}
+const FileList = () => {
+  const { toast } = useToast();
 
-interface FileListProps {
-  files: File[];
-  isLoading: boolean;
-  onDelete: (id: string) => void;
-  currentlyDeletingFile: string | null;
-}
+  const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<
+    string | null
+  >(null);
 
-const FileList: React.FC<FileListProps> = ({
-  files,
-  isLoading,
-  onDelete,
-  currentlyDeletingFile,
-}) => {
+  const utils = trpc.useContext();
+  const { data: files, isLoading } = trpc.getUserFiles.useQuery();
+
+  const { mutate: deleteFile } = trpc.deleteFile.useMutation({
+    onSuccess: () => {
+      utils.getUserFiles.invalidate();
+      toast({
+        title: "Success ✅",
+        description: "File deleted successfully",
+        variant: "default",
+      });
+    },
+    onMutate({ id }) {
+      setCurrentlyDeletingFile(id);
+    },
+    onSettled() {
+      setCurrentlyDeletingFile(null);
+    },
+    onError() {
+      toast({
+        title: "Error",
+        description: "Error deleting files",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deleteFile({ id });
+  };
+
   if (isLoading) {
     return <Skeleton height={100} className="my-2" count={1} />;
   }
 
+  if (!files) {
+    return (
+      <div className="mt-16 flex flex-col items-center gap-2">
+        <Ghost className="h-8 w-8 text-zinc-800" />
+        <p>Error</p>
+      </div>
+    );
+  }
   if (files.length === 0) {
     return (
       <div className="mt-16 flex flex-col items-center gap-2">
@@ -66,7 +96,7 @@ const FileList: React.FC<FileListProps> = ({
                 Date Added: {format(new Date(file.createdAt), "MMM yyyy")}
               </div>
               <Button
-                onClick={() => onDelete(file.id)}
+                onClick={() => handleDelete(file.id)}
                 size="sm"
                 variant="destructive"
               >

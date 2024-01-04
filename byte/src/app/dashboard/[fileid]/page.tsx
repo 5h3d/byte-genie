@@ -45,7 +45,7 @@ const Page = async ({ params }: PageProps) => {
             </div>
           </div>
           <div className="shrink-0 flex-[1.5] border-t border-gray-200 lg:w-96 lg:border-l lg:border-t-0">
-            <DynamicContentRenderer url={file.url} fileId={file.id}/>
+            <DynamicContentRenderer url={file.url} fileId={file.id} />
           </div>
         </div>
       </div>

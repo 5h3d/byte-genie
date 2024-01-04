@@ -14,7 +14,7 @@ const DynamicContentRenderer = ({
 }: DynamicContentRendererProps) => {
   const [selectedMode, setSelectedMode] = useState("chat");
 
-  const handleModeChange = (mode: string) => {
+  const handleModeChange = (mode: string):void => {
     setSelectedMode(mode);
   };
 

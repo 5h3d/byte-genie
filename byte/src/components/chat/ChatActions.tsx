@@ -1,6 +1,6 @@
 import React from "react";
 interface ChatActionsProps {
-  onModeChange: (mode: string) => {};
+  onModeChange: (mode: string) => void;
   selectedMode: string;
 }
 

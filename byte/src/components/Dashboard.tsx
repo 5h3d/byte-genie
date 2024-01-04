@@ -1,40 +1,8 @@
-"use client";
-
-import { useState } from "react";
-import { trpc } from "@/app/_trpc/client";
 import UploadButton from "./UploadButton";
 import MaxWidthWrapper from "./MaxWidthWrapper";
-import { useToast } from "./ui/use-toast";
 import FileList from "./FileList";
 
 const Dashboard = () => {
-  const { toast } = useToast();
-  const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<string | null>(null);
-
-  const utils = trpc.useContext();
-  const { data: files, isLoading } = trpc.getUserFiles.useQuery();
-
-  const { mutate: deleteFile } = trpc.deleteFile.useMutation({
-    onSuccess: () => {
-      utils.getUserFiles.invalidate();
-      toast({
-        title: "Success ✅",
-        description: "File deleted successfully",
-        variant: "default",
-      });
-    },
-    onMutate({ id }) {
-      setCurrentlyDeletingFile(id);
-    },
-    onSettled() {
-      setCurrentlyDeletingFile(null);
-    },
-  });
-
-  const handleDelete = (id: string) => {
-    deleteFile({ id });
-  };
-
   return (
     <MaxWidthWrapper>
       <main className="mx-auto max-w-7xl md:p-10">
@@ -43,12 +11,7 @@ const Dashboard = () => {
           <UploadButton />
         </div>
 
-        <FileList
-          files={files || []}
-          isLoading={isLoading}
-          onDelete={handleDelete}
-          currentlyDeletingFile={currentlyDeletingFile}
-        />
+        <FileList />
       </main>
     </MaxWidthWrapper>
   );

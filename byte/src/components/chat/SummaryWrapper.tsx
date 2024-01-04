@@ -1,24 +1,29 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { trpc } from "@/app/_trpc/client";
+import React, { useEffect, useState } from "react";
 import Message from "./Message";
+import { ExtendedMessage } from "@/types/message";
 import EmptyChat from "../EmptyChat";
 import { Loader2 } from "lucide-react";
-import { ExtendedMessage } from "@/types/message";
+import { trpc } from "@/app/_trpc/client";
 import { useToast } from "../ui/use-toast";
-
-const POLLING_INTERVAL_MS = 15000; // Poll every 15 seconds
 
 interface SummaryWrapperProps {
   url: string;
   fileId: string;
 }
 
-const SummaryWrapper: React.FC<SummaryWrapperProps> = ({ url, fileId }) => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [existingSummary, setExistingSummary] = useState<ExtendedMessage[]>([]);
-  const toast = useToast();
+interface Summary {
+  id: string;
+  createdAt: string;
+  isUserMessage: boolean;
+  text: string;
+}
 
-  const summarizeMutation = trpc.summarizeText.useMutation();
+const SummaryWrapper = ({ url, fileId }: SummaryWrapperProps) => {
+  const [summaries, setSummaries] = useState<ExtendedMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const [showTimeoutToast, setShowTimeoutToast] = useState(false);
+
   const getSummariesQuery = trpc.getSummaries.useQuery(
     { fileId },
     {
@@ -28,69 +33,81 @@ const SummaryWrapper: React.FC<SummaryWrapperProps> = ({ url, fileId }) => {
 
   useEffect(() => {
     if (getSummariesQuery.data && getSummariesQuery.data.length > 0) {
-      const summariesAsMessages = getSummariesQuery.data.map((summary) => ({
-        id: summary.id,
-        createdAt: summary.createdAt,
-        isUserMessage: false,
-        text: summary.text,
-      }));
-      setExistingSummary(summariesAsMessages);
+      const summariesAsMessages = getSummariesQuery.data.map(
+        (summary: Summary) => ({
+          id: summary.id,
+          createdAt: summary.createdAt,
+          isUserMessage: false,
+          text: summary.text,
+        })
+      );
+      setSummaries(summariesAsMessages);
     } else {
-      setExistingSummary([]);
+      setSummaries([]);
     }
   }, [getSummariesQuery.data]);
 
-  const sendForSummarization = useCallback(() => {
-    setLoading(true);
-    summarizeMutation.mutate(
-      { fileId, url },
-      {
-        onSuccess: (data) => {
-          setLoading(false);
-          const newSummary = {
-            id: `temp-${new Date().toISOString()}`, // Temporary ID
-            createdAt: new Date().toISOString(),
-            isUserMessage: false,
-            text: data.summary,
-          };
-          setExistingSummary((prevSummaries) => [...prevSummaries, newSummary]);
+  const generateSummary = async () => {
+    let timeout: NodeJS.Timeout;
+    timeout = setTimeout(() => {
+      setShowTimeoutToast(true);
+    }, 30000);
 
-          if (data.isTooLong) {
-            toast({
-              title: "Summary Too Long",
-              description:
-                "The summary was too long to be saved to the database.",
-              variant: "warning",
-            });
-          } else {
-            getSummariesQuery.refetch(); // Refetch if the summary was successfully saved
-          }
-        },
-        onError: (error) => {
-          setLoading(false);
-          toast({
-            title: "Error",
-            description:
-              error.message || "Error generating summary, please try again",
-            variant: "destructive",
-          });
-        },
+    try {
+      setLoading(true);
+      const response = await fetch("/api/summaries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url, fileId }),
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    );
-  }, [fileId, url, summarizeMutation, getSummariesQuery, toast]);
+      const newSummary = await response.json();
+
+      setSummaries((prev) => [...prev, newSummary]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error generating summary. Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showTimeoutToast) {
+      toast({
+        title: "Generating Summary",
+        description: "This may take a while. Please wait...",
+        variant: "default",
+      });
+    }
+  }, [showTimeoutToast, toast]);
 
   return (
     <div className="relative h-[calc(100vh-250px)] bg-zinc-50 lg:h-[calc(100vh-160px)] flex flex-col justify-between overflow-hidden">
       <div className="overflow-y-auto overflow-x-hidden flex-grow p-5 scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch">
-        {existingSummary.length > 0 ? (
-          existingSummary.map((summary, index) => (
+        {getSummariesQuery.isLoading ? (
+          <div className="flex-1 flex justify-center items-center flex-col mb-28 h-full">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              <h3 className="font-semibold text-xl">Loading...</h3>
+              <p className="text-zinc-500 text-sm">Loading summaries</p>
+            </div>
+          </div>
+        ) : summaries.length > 0 ? (
+          summaries.map((summary, index) => (
             <div className="mt-5" key={summary.id}>
               <Message
                 message={summary}
                 isNextMessageSamePerson={
                   index > 0 &&
-                  existingSummary[index - 1].isUserMessage ===
-                    summary.isUserMessage
+                  summaries[index - 1].isUserMessage === summary.isUserMessage
                 }
               />
             </div>
@@ -101,13 +118,11 @@ const SummaryWrapper: React.FC<SummaryWrapperProps> = ({ url, fileId }) => {
       </div>
       <div className="h-20 flex items-center justify-center">
         <button
-          onClick={sendForSummarization}
-          disabled={loading || summarizeMutation.isLoading}
+          onClick={generateSummary}
+          disabled={loading}
           className="bg-primary hover:bg-red-900 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
         >
-          {(loading || summarizeMutation.isLoading) && (
-            <Loader2 className="animate-spin h-4 w-4" />
-          )}
+          {loading && <Loader2 className="animate-spin h-4 w-4" />}
           Generate Summary
         </button>
       </div>
