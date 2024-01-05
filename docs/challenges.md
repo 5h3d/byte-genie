@@ -93,7 +93,7 @@ Given more time and resources, I would focus on the following areas for backend 
 
 3. Advanced Error Handling: Develop a more robust error-handling mechanism to improve the user experience.
 
-4. Estimated summary time: Inplement features that shows the estimation time of summarization, which would improve the user's experience.
+4. Estimated summary time: Implement features that shows the estimation time of summarization, which would improve the user's experience.
 
 5. Database storage: split latge data that can't be saved to prisma in chunks, so as to enable user see their previous large summary data.
 
