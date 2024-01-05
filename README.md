@@ -1,10 +1,10 @@
-BYTE an app for document interaction
+# BYTE an app for document interaction
 
 ## Introduction
 
 This application enables users to interact with documents through natural language. The primary functionality is generating abstracts, short summaries and Questions and answers for entire documents using a fine-tuned BART (Bidirectional and Auto-Regressive Transformers) model.
 
-Objective
+### Objective
 The goal is to create an application for various document-related tasks, with a focus on writing abstracts or short summaries for entire documents and questions and answering of document, utilizing advanced NLP techniques.
 
 ## Features
@@ -17,7 +17,7 @@ The goal is to create an application for various document-related tasks, with a 
 - Infinite Message Loading for Performance
 - Drag n’ Drop Uploads
 - Instant Loading States
-- Data Fetching Using tRPC & Zod
+- Data Fetching Using tRPC,websockets & Zod
 - LangChain for Infinite AI Memory
 - Pinecone as our Vector Storage
 - Prisma as our ORM
@@ -27,13 +27,9 @@ The goal is to create an application for various document-related tasks, with a 
 ### Backend Technologies
 
 1. FastAPI: A modern, fast web framework for building APIs with Python 3.9+, offering robust features and easy asynchronous programming.
-2. BART: A transformer-based model for natural language processing, pre-trained on a large corpus of text.
-3. Pydantic: Utilized for data validation and settings management using Python type annotations.
-4. Transformers Library (Hugging Face): Employed for utilizing and fine-tuning pre-trained NLP models.
-5. Datasets Library (Hugging Face): For loading and processing datasets in a streamlined manner.
-6. Torch: An open-source machine learning library, used for training and inference of the BART model.
-7. Uvicorn: An ASGI server for hosting the FastAPI application.
-8. CORS Middleware: To handle Cross-Origin Resource Sharing in FastAPI.
+2. Langchain: A framework for developing applications powered by language models. 
+3. Uvicorn: An ASGI server for hosting the FastAPI application.
+
 
 ### Frontend Technologies
 1. Next.js: A React framework for server-rendered and static web applications.
@@ -48,7 +44,7 @@ The goal is to create an application for various document-related tasks, with a 
 [installations and configurations](docs/installations.md).
 
 
-[Challendes and improvements](docs/architecture.md).
+[Challenges and improvements](docs/architecture.md).
 
 
 ## License

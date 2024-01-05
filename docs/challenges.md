@@ -52,6 +52,8 @@ Given more time and resources, I would focus on the following areas for backend 
 
 5. Estimated summary time: Inplement features that shows the estimation time of summarization, which would improve the user's experience.
 
+6. Texting: Add unit tests for critical functions.
+
 ## Frontend Challenges and Insights
 
 1. Integration of Diverse Libraries
@@ -68,7 +70,7 @@ Solution: By thoroughly understanding Kinde's documentation and leveraging Next.
 
 Insight: This task shows the significance of secure and efficient user authentication in modern web applications, enhancing user trust and application security.
 
-### Frontemd Code Explanation
+### Frontend Code Explanation
 
 1. Next.js: Provides the core framework for building the user interface, chosen for their robustness and community support.
 2. State Management and Data Fetching: Libraries like @tanstack/react-query and @trpc are used for efficient data handling and server-state management.
@@ -81,7 +83,7 @@ Insight: This task shows the significance of secure and efficient user authentic
 9. Web sockets: WebSockets for real-time, bi-directional communication and asynchronous processing, which efficiently managed lengthy computations without causing timeouts.
 10. Other Utilities: Additional libraries like date-fns for date operations, papaparse for CSV parsing, and react-pdf for PDF handling, enhancing the application’s capabilities.
 
-### Backend Code - Future Improvements
+### Frontend Code - Future Improvements
 
 Given more time and resources, I would focus on the following areas for backend improvement:
 
@@ -93,4 +95,7 @@ Given more time and resources, I would focus on the following areas for backend 
 
 4. Estimated summary time: Inplement features that shows the estimation time of summarization, which would improve the user's experience.
 
-5. Database storage: split latge data that can't be saved to prisma in chunks, so as to enable user see their previous large summary data
+5. Database storage: split latge data that can't be saved to prisma in chunks, so as to enable user see their previous large summary data.
+
+6. Texting: Add unit tests for critical functions.
+
