@@ -47,9 +47,6 @@ The goal is to create an application for various document-related tasks, with a 
 [Challenges and improvements](docs/architecture.md).
 
 
-## License
-
-Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 
 <!-- CONTACT -->
