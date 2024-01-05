@@ -1,18 +1,35 @@
 import os
-import uuid
-import requests
+import httpx
+from fastapi import FastAPI, HTTPException, WebSocket
+from pydantic import BaseModel
 from tempfile import NamedTemporaryFile
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from langchain.document_loaders import PyPDFLoader, CSVLoader
 from langchain.chains.summarize import load_summarize_chain
 from langchain.chat_models import ChatOpenAI
-from typing import Dict, List
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.websockets import WebSocketDisconnect
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Initialize FastAPI app
 app = FastAPI()
-task_status: Dict[str, str] = {}  # Dictionary to store task status
 
-# Set your OpenAI API key
-os.environ['OPENAI_API_KEY'] = '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'
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+# Set OpenAI API key from environment variable
+openai_api_key = os.getenv('OPENAI_API_KEY')
+
+# Define a request model
+class SummarizeRequest(BaseModel):
+    url: str
 
 def file_type(url):
     if url.lower().endswith('.pdf'):
@@ -22,16 +39,17 @@ def file_type(url):
     else:
         raise ValueError('Unsupported file type')
 
-def download_file(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        file_suffix = '.pdf' if url.lower().endswith('.pdf') else '.csv'
-        temp_file = NamedTemporaryFile(delete=False, suffix=file_suffix)
-        temp_file.write(response.content)
-        temp_file.close()
-        return temp_file.name
-    else:
-        raise Exception(f"Failed to download file: Status code {response.status_code}")
+async def download_file(url):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        if response.status_code == 200:
+            file_suffix = '.pdf' if url.lower().endswith('.pdf') else '.csv'
+            temp_file = NamedTemporaryFile(delete=False, suffix=file_suffix)
+            with open(temp_file.name, "wb") as file:
+                file.write(response.content)
+            return temp_file.name
+        else:
+            raise HTTPException(status_code=500, detail=f"Failed to download file: Status code {response.status_code}")
 
 def split_into_parts(docs, part_size):
     parts = []
@@ -52,28 +70,21 @@ def split_into_parts(docs, part_size):
 
     return parts
 
-def process_large_file(url: str, task_id: str):
-    try:
-        task_status[task_id] = "Processing"
-        summary = summarize_document(url)
-        task_status[task_id] = "Completed: " + summary
-    except Exception as e:
-        task_status[task_id] = "Failed: " + str(e)
-
-def summarize_document(url, part_size=5000) -> str:
+async def summarize_document(url, part_size=5000):
     file_type_result = file_type(url)
     llm = ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo-1106")
     chain = load_summarize_chain(llm, chain_type="stuff")
 
     if file_type_result == 'pdf':
-        loader = PyPDFLoader(url, extract_images=True)
+        # loader = PyPDFLoader(url, extract_images=True)
+        loader = PyPDFLoader(url)
     elif file_type_result == 'csv':
-        file_path = download_file(url)
+        file_path = await download_file(url)
         loader = CSVLoader(file_path=file_path)
 
     docs = loader.load()
     parts = split_into_parts(docs, part_size)
-    summaries: List[str] = []
+    summaries = []
 
     for part in parts:
         summary = chain.run(part)
@@ -81,27 +92,34 @@ def summarize_document(url, part_size=5000) -> str:
 
     return ' '.join(summaries)
 
-@app.post("/summarize")
-async def summarize(request: Request, background_tasks: BackgroundTasks):
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
     try:
-        request_data = await request.json()
-        url = request_data.get("url")
-        if not url:
-            raise ValueError("URL parameter is required.")
+        while True:
+            try:
+                data = await websocket.receive_json()
+                url = data.get("url")
+                if url:
+                    summary_result = await summarize_document(url)
+                    await websocket.send_json({"summary": summary_result})
+                else:
+                    await websocket.send_json({"error": "No URL provided"})
+            except WebSocketDisconnect:
+                break  # Break the loop if client disconnects
+            except Exception as e:
+                await websocket.send_json({"error": str(e)})
+                break  # Optionally, break on other exceptions
+    finally:
+        await websocket.close()
 
-        task_id = str(uuid.uuid4())  # Generate a unique task ID
-        background_tasks.add_task(process_large_file, url, task_id)
-        task_status[task_id] = "Queued"
-
-        return {"task_id": task_id}
+@app.post("/summarize")
+async def summarize(request: SummarizeRequest):
+    try:
+        summary_result = await summarize_document(request.url)
+        return {"summary": summary_result}
     except Exception as e:
-        error_message = f"Error occurred: {e}"
-        raise HTTPException(status_code=500, detail=error_message)
-
-@app.get("/status/{task_id}")
-def check_status(task_id: str):
-    status = task_status.get(task_id, "Not Found")
-    return {"task_id": task_id, "status": status}
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

@@ -1,15 +1,12 @@
-FROM python:3.9
+FROM python:3.9.2
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
-COPY requirements.txt /app/
+COPY . .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app
-
 EXPOSE 8000
 
-ENV MODEL_DIR /app/fine_tuned_bart
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

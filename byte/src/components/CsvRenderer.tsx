@@ -5,12 +5,9 @@ import Papa from "papaparse";
 import { Loader2 } from "lucide-react";
 import CsvFullscreen from "./CsvFullscreen";
 
-// The props for the CsvRenderer component
 interface CsvRendererProps {
   url: string;
 }
-
-// The type for each row in the CSV data
 interface CsvRow {
   [key: string]: string;
 }

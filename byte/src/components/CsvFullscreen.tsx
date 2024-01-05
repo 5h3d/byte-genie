@@ -4,43 +4,45 @@ import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Expand } from "lucide-react";
 
-// Define the props for the CsvFullscreen component
 interface CsvFullscreenProps {
   url: string;
 }
 
-// Define the type for each row in the CSV data
 interface CsvRow {
-  [key: string]: string;
+  [key: string]: string; 
 }
 
-const CsvFullscreen: React.FC<CsvFullscreenProps> = ({ url }) => {
-  const [csvData, setCsvData] = useState<CsvRow[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+const CsvFullscreen = ({ url }: CsvFullscreenProps) => {
+  const [csvData, setCsvData] = useState<CsvRow[]>([]); // State to store the parsed CSV data.
+  const [isOpen, setIsOpen] = useState(false); // State to manage dialog visibility.
 
+  // useEffect hook to fetch and parse CSV data on component mount or URL change.
   useEffect(() => {
     fetch(url)
       .then((response) => response.text())
       .then((csvText) => {
+        // Using Papa Parse to convert CSV text to JSON.
         Papa.parse<CsvRow>(csvText, {
           complete: (result: any) => {
-            setCsvData(result.data);
+            setCsvData(result.data); 
           },
-          header: true,
+          header: true, 
         });
       });
-  }, [url]);
+  }, [url]); 
 
+  // Function to render a table from the CSV data.
   const renderTable = (data: CsvRow[]) => {
     if (data.length === 0) return <p>Loading CSV data...</p>;
 
-    const headers = Object.keys(data[0]);
+    const headers = Object.keys(data[0]); 
     const rows = data;
 
     return (
       <table>
         <thead>
           <tr className="border border-gray-50">
+            {/* Mapping headers to table column headers */}
             {headers.map((header, index) => (
               <th
                 key={index}
@@ -52,6 +54,7 @@ const CsvFullscreen: React.FC<CsvFullscreenProps> = ({ url }) => {
           </tr>
         </thead>
         <tbody>
+          {/* Mapping each row of CSV data to table rows */}
           {rows.map((row, rowIndex) => (
             <tr key={rowIndex}>
               {Object.values(row).map((value, cellIndex) => (
@@ -71,14 +74,16 @@ const CsvFullscreen: React.FC<CsvFullscreenProps> = ({ url }) => {
 
   return (
     <>
+      {/* Dialog component for displaying the CSV data in fullscreen */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
+          {/* Trigger button for opening the dialog */}
           <Button variant="ghost" aria-label="fullscreen">
-            <Expand className="h-4 w-4" />
+            <Expand className="h-4 w-4" /> 
           </Button>
         </DialogTrigger>
         <DialogContent className="w-screen">
-          <div className="h-[calc(100dvh-100px)] overflow-auto ">
+          <div className="h-[calc(100vh-100px)] overflow-auto ">
             {renderTable(csvData)}
           </div>
         </DialogContent>

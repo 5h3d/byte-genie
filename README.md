@@ -9,7 +9,7 @@ The goal is to create an application for various document-related tasks, with a 
 
 ## Features
 
-- A Beautiful And Highly Functional PDF and csv Viewer
+- A Beautiful And Highly Functional PDF and CSV Viewer
 - Streaming API Responses in Real-Time
 - Authentication Using Kinde
 - Clean UI Using 'shadcn-ui'
@@ -26,7 +26,7 @@ The goal is to create an application for various document-related tasks, with a 
 
 ### Backend Technologies
 
-1. FastAPI: A modern, fast web framework for building APIs with Python 3.7+, offering robust features and easy asynchronous programming.
+1. FastAPI: A modern, fast web framework for building APIs with Python 3.9+, offering robust features and easy asynchronous programming.
 2. BART: A transformer-based model for natural language processing, pre-trained on a large corpus of text.
 3. Pydantic: Utilized for data validation and settings management using Python type annotations.
 4. Transformers Library (Hugging Face): Employed for utilizing and fine-tuning pre-trained NLP models.
