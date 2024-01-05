@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This application enables users to interact with documents through natural language. The primary functionality is generating abstracts, short summaries and Questions and answers for entire documents using a fine-tuned BART (Bidirectional and Auto-Regressive Transformers) model.
+This application enables users to interact with documents through natural language. The primary functionality is generating abstracts, short summaries and Questions and answers for entire documents.
 
 ### Objective
 The goal is to create an application for various document-related tasks, with a focus on writing abstracts or short summaries for entire documents and questions and answering of document, utilizing advanced NLP techniques.
