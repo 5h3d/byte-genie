@@ -44,15 +44,7 @@ The goal is to create an application for various document-related tasks, with a 
 [installations and configurations](docs/installations.md).
 
 
-[Challenges and improvements](docs/architecture.md).
 
 
 
 
-<!-- CONTACT -->
-
-## Contact
-
-Udeh Shedrack - udehshedrack.u@gmail.com
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
